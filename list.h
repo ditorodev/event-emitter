@@ -16,6 +16,7 @@ struct client {
 struct event {
     char name[100];
     node_s *senders;
+    node_c *clients;
     node_center *centers;
     struct event *next;
 };
@@ -31,7 +32,7 @@ struct centerList{
     struct centerList *next;
 };
 
-struct senderlist {
+struct senderList {
     void *sender;
     node_c *clients;
     struct senderList *next;
