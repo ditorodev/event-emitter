@@ -14,6 +14,34 @@ void error(int n){
 
 Centro *CENTROS;
 
+void imprimirCentros(void) {
+    node_center *aux1;
+    Centro *aux;
+    node_e *aux2;
+
+    aux = CENTROS;
+    while(aux){
+        printf("\n Centros asociados a %s \n", aux->name);
+        if(!(aux->events)){ 
+            aux = aux->next;
+            continue;
+            }
+        aux2 = aux->events;
+        while(aux2){
+            printf("  CENTROS REGISTRADOS AL EVENTO %s", aux2->name);
+            aux1 = aux2->centers;
+            while(aux1){
+                printf("\n   %s \n", aux1->center->name);
+                //printf("\n   %s \n", (aux1->center) == (aux1->next->center)?"iguales":"distintos");
+                aux1 = aux1->next;
+            }
+            aux2 = aux2->next;
+        }
+        aux = aux->next;
+    }
+
+}
+
 void newCenter(char *name) {
 
     Centro *new = (Centro *) malloc(sizeof(Centro));
@@ -49,42 +77,37 @@ void observeCenterFromCenter (char *centerA, char *centerB, char *event){
     Centro *cB = locateCenter(centerB);
     node_e *aux;
     node_e *new = locateEvent(cA, event);
-
+    node_center *aux1;
     if(!cA || !cB){ 
         error(1);
         return;
     }
-    // asociamos el evento al centro
+    // ASOCIAMOS EL EVENTO AL CENTRO A
     aux = cA->events;
     if(!new){  
         new = (node_e *)malloc(sizeof(node_e));
         strcpy(new->name, event);
-        printf("\nNUEVO EVENTO A REGISTAR EN \n %s \n %s\n", cA->name,new->name);
         if(!aux) cA->events = new;
         else {
             while(aux->next) aux = aux->next;
             aux->next = new;
         }
     }
-
-    printf("\n\n centro 1: %s encontrado %s \n\n", centerA, cA->name);
-    printf("\n\n centro 2: %s encontrado %s \n\n", centerB, cB->name);
         
-    // asociamos el centro b al evento
-    node_center *aux1 = new->centers;    
+    // ASOCIAMOS EL CENTRO B AL EVENTO
+    aux1 = new->centers;
     if(!aux1){ 
         aux1 = (node_center *)malloc(sizeof(node_center));
-        aux1->center = &cB;
+        aux1->center = cB;
         new->centers = aux1;    
     }else{
-        while(aux1->next) aux1 = aux1->next;
+        while(aux1->next){ 
+            printf("\n  %s  \n", aux1->center->name);
+            aux1 = aux1->next;
+        } 
         aux1->next = (node_center *) malloc(sizeof(node_center));
-        aux1->next->center = &cB;
+        aux1->next->center = cB;
     }
-    printf("\nCENTRO \n %s\n REGISTRADO AL EVENTO \n %s\n", (*new->centers->center)->name, new->name); 
-    printf("\nEVENTO %s registrado exitosamente\n", cA->events->name);
-
-    
 }
 
 // void observeCenterFromClient(char *centerA, void *client, void *sender, char *event, void (* methodToCall)(void *)){
@@ -117,30 +140,12 @@ int main (void) {
     }
 
     printf("\nOBSERVE CENTER FROM CENTER\n");
-    observeCenterFromCenter("A", "B", "SEXO ANAL");
-    observeCenterFromCenter("A", "D", "SEXO ANAL");
-    observeCenterFromCenter("A", "C", "SEXO ANAL");
+    observeCenterFromCenter("A", "B", "hola");
+    observeCenterFromCenter("A", "D", "hola");
+    observeCenterFromCenter("A", "C", "chao");
 
-    node_center *aux1;
-    node_e *aux2;
-    aux = CENTROS;
-    while(aux){
-        printf("\n Centros asociados a %s \n", aux->name);
-        if(!(aux->events)){ 
-            aux = aux->next;
-            continue;
-            }
-        aux2 = aux->events;
-        while(aux2){
-            printf("  CENTROS REGISTRADOS AL EVENTO %s", aux2->name);
-            aux1 = aux2->centers;
-            while(aux1){
-                printf("\n   %s \n", (*aux1->center)->name);
-                aux1 = aux1->next;
-            }
-            aux2 = aux2->next;
-        }
-        aux = aux->next;
-    }
+    imprimirCentros();
+    observeCenterFromCenter("A", "D", "chao");
+    imprimirCentros();
     return 0;
 }

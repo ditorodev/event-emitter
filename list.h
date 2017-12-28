@@ -27,7 +27,7 @@ struct center {
 };
 
 struct centerList{
-    Centro **center;
+    Centro *center;
     struct centerList *next;
 };
 
