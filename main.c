@@ -7,15 +7,55 @@ void error(int n){
     printf("\n ERROR: ");
     switch(n){
         case 1:
-            printf("Uno de los centros no existe \n");
+            printf("Uno de los centros no existe ");
             break;
         case 2:
-            printf("El cliente es nulo o no existe \n");
+            printf("El evento es nulo o no existe ");
             break;
+        case 3:
+            printf("El cliente no puede ser NULL ");
+            break;
+       
     }
+    printf("\n");
 }
 
 Centro *CENTROS;
+
+void removeFromList_c(node_c **list, void *del) {
+    if(!*list) return;
+
+    node_c *aux = *list;
+    node_c *prev = *list;
+    
+    while(aux && aux->client != del){ 
+        prev = aux;
+        aux = aux->next;
+    }
+    if(aux == *list) *list = (*list)->next;
+    if(aux && aux->client == del){
+        if(prev) prev->next = aux->next;
+        free(aux);
+    }
+
+}
+
+void removeFromList_center(node_center **list, Centro *del){
+    if(!*list) return;
+
+    node_center *aux = *list;
+    node_center *prev = *list;
+
+    while(aux && aux->center != del){ 
+        prev = aux;
+        aux = aux->next;
+    }
+    if(aux == *list) *list = (*list)->next;
+    if(aux && aux->center == del){
+        if(prev) prev->next = aux->next;
+        free(aux);
+    }
+}
 
 void imprimirCentros(void) {
     node_center *aux1;
@@ -101,7 +141,6 @@ node_e * locateEvent(Centro *center, char *event){
 node_s * locateSender(node_e *event, void *sender){
     node_s *aux = event->senders;
     
-    //printf("\n Sender = %p \n", sender);
     while(aux && aux->sender != sender) aux = aux->next;
     return aux;
 }
@@ -109,14 +148,16 @@ node_s * locateSender(node_e *event, void *sender){
 void observeCenterFromCenter (char *centerA, char *centerB, char *event){
     Centro *cA = locateCenter(centerA);
     Centro *cB = locateCenter(centerB);
-    node_e *aux;
-    node_e *eventToSub = locateEvent(cA, event);
-    node_center *aux1;
-    
     if(!cA || !cB){ 
-        error(1);
-        return;
+            error(1);
+            return;
     }
+
+    node_e *aux = NULL;
+    node_e *eventToSub = locateEvent(cA, event);
+    node_center *aux1 = NULL;
+    
+   
 
     // ASOCIAMOS EL EVENTO AL CENTRO A
     aux = cA->events;
@@ -143,27 +184,31 @@ void observeCenterFromCenter (char *centerA, char *centerB, char *event){
         } 
         aux1->next = (node_center *) malloc(sizeof(node_center));
         aux1->next->center = cB;
+        aux1->next->next = NULL;
     }
 }
 
 void observeCenterFromClient(char *centerA, void *client, void *sender, char *event, void (* methodToCall)(void *)){
-    Centro *c = locateCenter(centerA);
-    node_e *eventToSub = locateEvent(c, event);
-    node_s *senderToSub;
-    node_s *p_sender;
-    node_c *p_client;
-    node_c *clientToSub = (node_c *) malloc(sizeof(node_c));
-
-    clientToSub->client = client;
-    
-    if (!client){
-        error(2);
+     if (!client){
+        error(3);
         return;
     }
+
+    Centro *c = locateCenter(centerA);
     if(!c){
         error(1);
         return;
     }
+
+    node_e *eventToSub = locateEvent(c, event);
+    node_s *senderToSub = NULL;
+    node_s *p_sender = NULL;
+    node_c *p_client = NULL;
+    node_c *clientToSub = (node_c *) malloc(sizeof(node_c));
+    
+    clientToSub->client = client;
+   
+    
     // SI EL EVENTO NO EXISTE, LO AGREGAMOS A LA LISTA DE EVENTOS EN EL CENTRO
     if (!eventToSub){
         eventToSub = (node_e *) malloc(sizeof(node_e));
@@ -176,7 +221,7 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
         }
     }
     // SI HAY UN SENDER VINCULADO AL EVENTO, AGREGAMOS EL SENDER EN EL EVENTO. EN CASO DE QUE
-    // EL SENDER SEA (NULL) AGREGAMOS EL CLIENTE A LA LISTA DE CLIENTES    
+    // EL SENDER SEA (NULL) AGREGAMOS EL CLIENTE A LA LISTA DE CLIENTES   
     if(sender){
         // YA QUE AGREGAMOS EL EVENTO AL CENTRO, CREAMOS LA LISTA DE ESTE SENDER
         senderToSub = locateSender(eventToSub, sender);
@@ -205,11 +250,111 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
             return;
         }
     }
+    // CHEQUEAMOS QUE EL PRIMER ELEMENTO DE LA LISTA NO SEA IGUAL AL CLIENTE
+    if(p_client->client == client) return;
+    
     // AHORA AGREGAMOS EL CLIENTE QUE ESCUCHA AL SENDER EN LA LISTA CORRESPONDIENTE
-    while(p_client->next) p_client = p_client->next;
+    while(p_client->next){
+        if(p_client->client == client) return; // CHEQUEAMOS QUE EL CLIENTE NO ESTE EN LA LISTA
+        p_client = p_client->next;
+    } 
     p_client->next = clientToSub;
+    clientToSub->next = NULL;
+    
+}
 
+void removeObserver(char *center, void *client, char *event){
+    Centro *c = locateCenter(center);
+    if(!c) {
+        error(1);
+        return;
+    }
 
+    node_e *e = locateEvent(c, event);
+    if(!e) {
+        error(2);
+        return;
+    }
+
+    // ELIMINAMOS DE LA LISTA DE CLIENTES QUE ESTAN SUSCRITOS SIN NINGUN SENDER EN ESPECIFICO
+    removeFromList_c(&e->clients, client);
+
+    // ELIMINAMOS DE LA LISTA DE CADA UNO DE LOS SENDERS A LOS QUE ESTA SUSCRITO
+    node_s *p_sender = e->senders;
+    node_s *prev_sender = e->senders;
+
+    while(p_sender) {
+        removeFromList_c(&p_sender->clients, client);
+
+        // SI EL SENDER NO TIENE CLIENTES LO ELIMINAMOS DE LA LISTA
+        if(!p_sender->clients) {
+            if(p_sender == e->senders) {
+                e->senders = p_sender->next;
+                free(p_sender);
+                p_sender = e->senders;
+                continue;
+            }
+            else {
+                prev_sender->next = p_sender->next;
+                free(p_sender);
+                p_sender = prev_sender->next;
+                continue;
+            } 
+        }
+        prev_sender = p_sender;
+        p_sender = p_sender->next;
+    }
+
+}
+
+void removeObservers(char *center, void *client) {
+    Centro * c = locateCenter(center);
+    if(!c) {
+        error(1);
+        return;
+    }
+
+    node_e *p_event = c->events;
+    node_e *prev = c->events;
+
+    // RECORREMOS TODOS LOS EVENTOS DEL CENTRO Y VAMOS ELIMINANDO EL CLIENTE DE CADA UNO 
+    // DE ELLOS CON LA FUNCION removeObserver
+    while(p_event){
+        removeObserver(center, client, p_event->name);
+        // SI EL EVENTO NO TIENE CLIENTES NI SENDERS NI CENTROS LO ELIMINAMOS DE LA LISTA
+        if(!p_event->clients && !p_event->senders && !p_event->centers) {
+            if(p_event == c->events) {
+                c->events = p_event->next;
+                free(p_event);
+                p_event = c->events;
+                continue;
+            }
+            else {
+                prev->next = p_event->next;
+                free(p_event);
+                p_event = prev->next;
+                continue;
+            }
+        }
+        prev = p_event;
+        p_event = p_event->next;
+        
+    }
+
+}
+
+void removeAllObservers(void * client){
+    Centro *c = CENTROS;
+
+    while(c){
+        removeObservers(c->name, client);
+        c = c->next;
+    }
+
+}
+
+void removeObserverFromCenter(char *centerA, char *centerB, char *event) {
+    
 }
 
 void eventToFire (void *a) {
@@ -236,11 +381,52 @@ int main (void) {
     observeCenterFromCenter("A", "D", "hola");
     observeCenterFromCenter("A", "C", "chao");
     observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+    observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
     observeCenterFromClient("A", &b, &c, "hola", eventToFire);
-    observeCenterFromClient("A", &c, NULL, "hola", eventToFire);
-    observeCenterFromClient("A", &a, &b, "hola", eventToFire);
-    observeCenterFromClient("A", &a, &c, "hola", eventToFire);
-    observeCenterFromCenter("A", "D", "chao");
+    observeCenterFromClient("A", &b, &c, "hola", eventToFire);
+    observeCenterFromClient("A", &b, &c, "hola", eventToFire);
+    observeCenterFromClient("A", &b, &c, "hola", eventToFire);
+    observeCenterFromClient("A", &b, &c, "hola", eventToFire);
+    observeCenterFromClient("A", &b, &c, "hola", eventToFire);
+    observeCenterFromClient("A", &b, &c, "hola", eventToFire);
+
+    observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+    observeCenterFromClient("C", &a, &c, "hola", eventToFire);
+    observeCenterFromCenter("C", "D", "chao");
     imprimirCentros();
+    removeAllObservers(&e);
+    removeObservers("A", &b);
+    removeObserver("A", &i, "hola");
+    removeObserver("A", &a, "hola");
+    removeObservers("A", &a);
+    removeObservers("A", &c);
+    imprimirCentros();
+    observeCenterFromClient("A", &b, &c, "hola", eventToFire);
+    observeCenterFromClient("A", &b, NULL, "hola", eventToFire);
+    observeCenterFromClient("B", &b, &c, "hola", eventToFire);
+    observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+    observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+    observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+    observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+    observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+    observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+    observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+    observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+    observeCenterFromClient("D", &b, &c, "hola", eventToFire);
+    imprimirCentros();
+    printf("\n remove all observers de b %p \n\n", &b);
+    removeAllObservers(&b);
+    imprimirCentros();
+    
     return 0;
 }
