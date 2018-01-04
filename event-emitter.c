@@ -6,16 +6,19 @@
 void error(int n){
 	printf("\n ERROR: ");
 	switch(n){
-			case 1:
-					printf("Uno de los centros no existe ");
-					break;
-			case 2:
-					printf("El evento es nulo o no existe ");
-					break;
-			case 3:
-					printf("El cliente no puede ser NULL ");
-					break;
-			
+		case 0:
+			printf("Para crear un centro se debe de especificar un nombre");
+			break;
+		case 1:
+			printf("Uno de los centros no existe ");
+			break;
+		case 2:
+			printf("El evento es nulo o no existe ");
+			break;
+		case 3:
+			printf("El cliente no puede ser NULL ");
+			break;
+		
 	}
 	printf("\n");
 }
@@ -134,7 +137,10 @@ void imprimirCentros(void) {
 
 
 void newCenter(char *name) {
-
+	if(!name) {
+		error(0);
+		return;
+	}
 	Centro *new = (Centro *) malloc(sizeof(Centro));
 	if(!CENTROS){ // NOS ASEGURAMOS QUE EXISTA ALGUIEN EN LA LISTA DE CENTROS
 			CENTROS = new;
@@ -170,11 +176,13 @@ node_s * locateSender(node_e *event, void *sender){
 }
 // Centro B observa al centro A
 void observeCenterFromCenter (char *centerA, char *centerB, char *event){
+	if(!centerA || !centerB || !event) return;
+
 	Centro *cA = locateCenter(centerA);
 	Centro *cB = locateCenter(centerB);
 	if(!cA || !cB){ 
-					error(1);
-					return;
+		error(1);
+		return;
 	}
 
 	node_e *aux = NULL;
@@ -215,9 +223,11 @@ void observeCenterFromCenter (char *centerA, char *centerB, char *event){
 }
 
 void observeCenterFromClient(char *centerA, void *client, void *sender, char *event, void (* methodToCall)(void *)){
-		if (!client){
-			error(3);
-			return;
+	if(!centerA || !methodToCall || !event ) return;
+
+	if (!client){
+		error(3);
+		return;
 	}
 
 	Centro *c = locateCenter(centerA);
@@ -291,6 +301,7 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 }
 
 void removeObserver(char *center, void *client, char *event){
+	if(!center || !client || !event) return;
 	Centro *c = locateCenter(center);
 	if(!c) {
 			error(1);
@@ -335,6 +346,7 @@ void removeObserver(char *center, void *client, char *event){
 }
 
 void removeObservers(char *center, void *client) {
+	if(!center || !client) return;
 	Centro * c = locateCenter(center);
 	if(!c) {
 			error(1);
@@ -371,6 +383,7 @@ void removeObservers(char *center, void *client) {
 }
 
 void removeAllObservers(void * client){
+	if(!client) return;
 	Centro *c = CENTROS;
 
 	while(c){
@@ -381,6 +394,7 @@ void removeAllObservers(void * client){
 }
 // Desasociar Centro B de un evento en el Centro A
 void removeObserverFromCenter(char *centerA, char *centerB, char *event) {
+	if(!centerA || !centerB || !event) return;
 	Centro *cA = locateCenter(centerA);
 	Centro *cB = locateCenter(centerB); 
 	if(!cA || !cB) {
@@ -399,6 +413,7 @@ void removeObserverFromCenter(char *centerA, char *centerB, char *event) {
 }
 
 void removeObserversFromCenter(char * centerA, char * centerB){
+	if(!centerA || !centerB) return;
 	Centro *cA = locateCenter(centerA);
 	if(!cA){
 		error(1);
@@ -412,6 +427,7 @@ void removeObserversFromCenter(char * centerA, char * centerB){
 }
 
 void removeCenter (char *center) {
+	if(!center) return;
 	if(!locateCenter(center)){
 		error(1);
 		return;
@@ -431,6 +447,7 @@ void removeCenter (char *center) {
 		prev->next = c->next;
 	}
 
+	// LIBERAMOS TODA SU INFORMACION
 	deleteList_client(c->events->clients); // CLIENTES CON SENDER NULL
 	deleteList_nodeCenter(c->events->centers); // CENTROS
 	node_s *aux = c->events->senders;

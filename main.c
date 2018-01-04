@@ -3,6 +3,10 @@
 #include <string.h>
 #include "event-emitter.h"
 
+void post(char *center, char *event, void *sender, void *params){
+
+}
+
 void eventToFire(void *a){
 	printf("\nEl evento ha sido lanzado con %s\n", (char *)a);
 }
@@ -39,7 +43,7 @@ int main (void) {
 	observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
 	observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
 	observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
-	observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
+	observeCenterFromClient(NULL, &i, NULL, "hola", eventToFire);
 	observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
