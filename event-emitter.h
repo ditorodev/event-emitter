@@ -1,5 +1,3 @@
-#ifndef LIST_H
-#define LIST_H
 
 typedef struct client node_c;
 typedef struct event node_e;
@@ -38,4 +36,14 @@ struct senderList {
     struct senderList *next;
 };
 
-#endif
+void newCenter(char *name);
+void observeCenterFromCenter (char *centerA, char *centerB, char *event);
+void observeCenterFromClient(char *centerA, void *client, void *sender, char *event, void (* methodToCall)(void *));
+void removeObserver(char *center, void *client, char *event);
+void removeObservers(char *center, void *client);
+void removeAllObservers(void * client);
+void removeObserverFromCenter(char *centerA, char *centerB, char *event);
+void removeObserversFromCenter(char * centerA, char * centerB);
+void removeCenter (char *center);
+
+void imprimirCentros(void);
