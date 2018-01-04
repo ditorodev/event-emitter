@@ -18,6 +18,9 @@ void error(int n){
 		case 3:
 			printf("El cliente no puede ser NULL ");
 			break;
+		case 4:
+			printf("El sender no tiene suscriptores ");
+			break;
 		
 	}
 	printf("\n");
@@ -458,4 +461,40 @@ void removeCenter (char *center) {
 	deleteList_sender(c->events->senders); // SENDERS
 	deleteList_event(c->events); // EVENTOS
 	free(c);
+}
+
+void post(char *center, char *event, void *sender, void *params){
+	if(!center || !event || sender) return;
+
+	Centro *c = locateCenter(center);
+	if(!c) {
+		error(1);
+		return;
+	}
+
+	node_e *e = locateEvent(c, event);
+	if(!e) {
+		error(2);
+		return;
+	}
+
+	node_s *s = locateSender(e, sender);
+	if(!s) {
+		error(4);
+		return;
+	}
+
+	node_c *client = event->clients;
+	while(client){
+		client->f(params);
+		client = client->next;
+	}
+
+	node_c *client = s->clients;
+	while(client){
+		client->f(params);
+		client = client->next;
+	}
+	
+	
 }

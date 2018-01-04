@@ -45,5 +45,6 @@ void removeAllObservers(void * client);
 void removeObserverFromCenter(char *centerA, char *centerB, char *event);
 void removeObserversFromCenter(char * centerA, char * centerB);
 void removeCenter (char *center);
+void post(char *center, char *event, void *sender, void *params);
 
 void imprimirCentros(void);
