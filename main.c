@@ -6,7 +6,7 @@
 
 
 void eventToFire(void *a){
-	printf("\nEl evento ha sido lanzado con %s\n", (char *)a);
+	printf("\n\n\n\n\n\nEl evento ha sido lanzado con %p\n\n\n\n\n\n\n", a);
 }
 
 int main (void) {
@@ -50,10 +50,10 @@ int main (void) {
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
-
-	observeCenterFromClient("C", &a, &b, "hola", eventToFire);
+	observeCenterFromClient("B", &b, &c, "hola", eventToFire);
+	observeCenterFromClient("C", &a, NULL, "hola", eventToFire);
 	observeCenterFromClient("C", &a, &c, "hola", eventToFire);
-	observeCenterFromCenter("C", "D", "chao");
+	observeCenterFromCenter("C", "A", "hola");
 	post("C", "hola", &c, "C es el sender para el centro C");
 	imprimirCentros();
 	removeAllObservers(&e);

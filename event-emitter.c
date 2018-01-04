@@ -117,6 +117,7 @@ void imprimirCentros(void) {
 											aux4 = aux3->clients;
 											while(aux4){
 													printf("\n------> %p\n", aux4->client);
+													//aux4->f(aux4->client);
 													aux4 = aux4->next;
 											}
 											aux3 = aux3->next;
@@ -464,7 +465,7 @@ void removeCenter (char *center) {
 }
 
 void post(char *center, char *event, void *sender, void *params){
-	if(!center || !event || sender) return;
+	if(!center || !event || !sender) return;
 
 	Centro *c = locateCenter(center);
 	if(!c) {
@@ -484,16 +485,22 @@ void post(char *center, char *event, void *sender, void *params){
 		return;
 	}
 
-	node_c *client = event->clients;
+	node_c *client = e->clients;
 	while(client){
-		client->f(params);
+		client->f(client->client);
 		client = client->next;
 	}
 
-	node_c *client = s->clients;
+	client = s->clients;
 	while(client){
-		client->f(params);
+		client->f(client->client);
 		client = client->next;
+	}
+
+	node_center *centers = e->centers;
+	while(centers){
+		post(centers->center->name, event, sender, params);
+		centers = centers->next;
 	}
 	
 	
