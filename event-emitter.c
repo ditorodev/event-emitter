@@ -539,6 +539,7 @@ void *executioner(void *a){
 	
 	post(args->center, args->event, args->sender, args->params);
 	free(args); // HACEMOS FREE DE LOS ARGS PARA NO EMBASURAR LA MEMORIA
+	
 	pthread_mutex_unlock(&lock);
 }
 
