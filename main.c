@@ -54,8 +54,10 @@ int main (void) {
 	observeCenterFromClient("C", &a, NULL, "hola", eventToFire);
 	observeCenterFromClient("C", &a, &c, "hola", eventToFire);
 	observeCenterFromCenter("C", "A", "hola");
-	post("C", "hola", &c, "C es el sender para el centro C");
+	post("C", "hola", &c, (void *)"C es el sender para el centro C");
+	postDelayed("C", "hola", &c, (void *)"C es el sender para el centro C", 60000);
 	imprimirCentros();
+	printf("\n\n\n\n\n\n");
 	removeAllObservers(&e);
 	removeObservers("A", &b);
 	removeObserver("A", &i, "hola");
@@ -83,6 +85,7 @@ int main (void) {
 	printf("\n remove all observers de b %p \n\n", &b);
 	removeAllObservers(&b);
 	imprimirCentros();
+	scanf("%s", nombre);
 	
 	return 0;
 }

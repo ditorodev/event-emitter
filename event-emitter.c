@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+#include <time.h>
+#include <sys/time.h>
 
 void error(int n){
 	printf("\n ERROR: ");
@@ -102,14 +105,14 @@ void imprimirCentros(void) {
 					// continue;
 					aux2 = aux->events;
 					while(aux2){
-							printf("-->Centros registrados al evento %s\n", aux2->name);
+							if(aux2->centers) printf("-->Centros registrados al evento %s\n", aux2->name);
 							aux1 = aux2->centers;
 							while(aux1){
 									printf("\n---->%s \n", aux1->center->name);
 									//printf("\n   %s \n", (aux1->center) == (aux1->next->center)?"iguales":"distintos");
 									aux1 = aux1->next;
 							}
-							printf("\n-->Clientes registrados al evento %s \n", aux2->name);
+							if(aux2->senders || aux2->clients) printf("\n-->Clientes registrados al evento %s \n", aux2->name);
 							if(aux2->senders){
 									aux3 = aux2->senders;
 									while(aux3){
@@ -503,5 +506,55 @@ void post(char *center, char *event, void *sender, void *params){
 		centers = centers->next;
 	}
 	
+	
+}
+
+// IMPLEMENTACION CON THREADS INDEPENDIENTES
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; // USAMOS MUTEX PARA EVITAR QUE SE DA;E LA LISTA GLOBAL DE CENTROS
+
+struct postParams {
+	char center[100];
+	char event[100];
+	void *sender;
+	void *params;
+	int miliseconds;
+};
+
+void *executioner(void *a){
+	struct timespec tim, tim2;
+	tim.tv_sec = 0;
+	tim.tv_nsec = 0;
+	struct postParams *args = (struct postParams *)a;
+	int remaining = args->miliseconds;
+	printf("\nPOSTDELAYED EXECUTING\n");
+	if((remaining / 1000) > 0){
+		tim.tv_sec = (remaining / 1000);
+		remaining = (tim.tv_sec*1000) - remaining; 
+	}
+	tim.tv_nsec = (remaining) * 1000000L;
+	printf("\nel threaad dormira por %ld %ld\n", tim.tv_nsec, tim.tv_nsec);
+	nanosleep(&tim, &tim2);
+
+	pthread_mutex_lock(&lock);
+	
+	post(args->center, args->event, args->sender, args->params);
+	free(args); // HACEMOS FREE DE LOS ARGS PARA NO EMBASURAR LA MEMORIA
+	pthread_mutex_unlock(&lock);
+}
+
+void postDelayed(char *center, char *event, void *sender, void *params, int miliseconds){
+	struct postParams *args = (struct postParams *) malloc(sizeof(struct postParams));
+	int err;
+
+	strcpy(args->center, center);
+	strcpy(args->event, event);
+	args->params = params;
+	args->sender = sender;
+	args->miliseconds = miliseconds;
+
+	pthread_t thread;
+
+	err = pthread_create( &thread, NULL, executioner, (void*) args);
+	if (err != 0) printf("\nNo se pudo crear el nuevo hilo :[%s]", strerror(err));
 	
 }

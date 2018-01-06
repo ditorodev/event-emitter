@@ -4,6 +4,7 @@ typedef struct event node_e;
 typedef struct center Centro;
 typedef struct centerList node_center;
 typedef struct senderList node_s;
+typedef struct delayedList delayed;
 
 struct client {
     void *client;
@@ -36,6 +37,15 @@ struct senderList {
     struct senderList *next;
 };
 
+struct delayedList {
+    char *center;
+    char *event;
+    void *sender;
+    void *args;
+    int ms;
+    struct delayedList *next;
+};
+
 void newCenter(char *name);
 void observeCenterFromCenter (char *centerA, char *centerB, char *event);
 void observeCenterFromClient(char *centerA, void *client, void *sender, char *event, void (* methodToCall)(void *));
@@ -46,5 +56,6 @@ void removeObserverFromCenter(char *centerA, char *centerB, char *event);
 void removeObserversFromCenter(char * centerA, char * centerB);
 void removeCenter (char *center);
 void post(char *center, char *event, void *sender, void *params);
+void postDelayed(char *center, char *event, void *sender, void *params, int miliseconds);
 
 void imprimirCentros(void);
