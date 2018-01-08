@@ -2,11 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include "event-emitter.h"
+#include <unistd.h>
 
 
 
 void eventToFire(void *a){
-	printf("\n\n\n\n\n\nEl evento ha sido lanzado con %p\n\n\n\n\n\n\n", a);
+	printf("\n\n\n\n\n\nEl evento ha sido lanzado con %p\n\n\n\n\n\n\n", (char *) a);
+}
+
+void deleteCenter(void *a){
+	removeCenter((char *)a);
 }
 
 int main (void) {
@@ -48,26 +53,28 @@ int main (void) {
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
+	observeCenterFromClient("A", &a, &c, "borrate", deleteCenter);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("B", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("C", &a, NULL, "hola", eventToFire);
 	observeCenterFromClient("C", &a, &c, "hola", eventToFire);
 	observeCenterFromCenter("C", "A", "hola");
-	post("C", "hola", &c, (void *)"C es el sender para el centro C");
-	postDelayed("C", "hola", &c, (void *)"C es el sender para el centro C", 60000);
+	observeCenterFromCenter("C", "A", "borrate");
+	post("C", "hola", &c, (void *)"CENTER");
+	postDelayed("A", "borrate", &c, (void *)"C", 6000);
 	imprimirCentros();
 	printf("\n\n\n\n\n\n");
 	removeAllObservers(&e);
 	removeObservers("A", &b);
-	removeObserver("A", &i, "hola");
-	removeObserver("A", &a, "hola");
 	removeObservers("A", &a);
 	removeObservers("A", &c);
+	removeObserver("A", &i, "hola");
+	removeObserver("A", &a, "hola");
 	imprimirCentros();
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
-	observeCenterFromClient("A", &b, NULL, "hola", eventToFire);
-	observeCenterFromClient("B", &b, &c, "hola", eventToFire);
+	// observeCenterFromClient("A", &b, NULL, "hola", eventToFire);
+	// observeCenterFromClient("B", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("C", &a, &b, "hola", eventToFire);
 	observeCenterFromClient("C", &a, &b, "hola", eventToFire);
 	observeCenterFromClient("C", &a, &b, "hola", eventToFire);
@@ -82,10 +89,11 @@ int main (void) {
 	removeObserverFromCenter("A", "C", "hola");
 	removeCenter("A");
 	removeObserversFromCenter("A", "B");
-	printf("\n remove all observers de b %p \n\n", &b);
+	printf("\n\n\n\n\n\n remove all observers de b %p \n\n", &b);
 	removeAllObservers(&b);
-	imprimirCentros();
-	scanf("%s", nombre);
+	//imprimirCentros();
+	sleep(7);
+	//imprimirCentros();
 	
 	return 0;
 }

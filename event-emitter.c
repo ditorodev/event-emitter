@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 void error(int n){
 	printf("\n ERROR: ");
@@ -56,7 +57,7 @@ void deleteList_nodeCenter(node_center *c){
 
 
 void removeFromList_c(node_c **list, void *del) {
-	if(!*list) return;
+	if(!*list || !del) return;
 
 	node_c *aux = *list;
 	node_c *prev = *list;
@@ -66,15 +67,14 @@ void removeFromList_c(node_c **list, void *del) {
 			aux = aux->next;
 	}
 	if(aux == *list) *list = (*list)->next;
-	if(aux && aux->client == del){
+	else if(aux && aux->client == del){
 			if(prev) prev->next = aux->next;
-			free(aux);
 	}
-
+	if(aux) free(aux);
 }
 
 void removeFromList_center(node_center **list, Centro *del){
-	if(!*list) return;
+	if(!*list || !del) return;
 
 	node_center *aux = *list;
 	node_center *prev = *list;
@@ -84,10 +84,11 @@ void removeFromList_center(node_center **list, Centro *del){
 			aux = aux->next;
 	}
 	if(aux == *list) *list = (*list)->next;
-	if(aux && aux->center == del){
+	else if(aux && aux->center == del){
 			if(prev) prev->next = aux->next;
-			free(aux);
 	}
+	if(aux) free(aux);
+	
 }
 
 void imprimirCentros(void) {
@@ -247,11 +248,12 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 	node_s *senderToSub = NULL;
 	node_s *p_sender = NULL;
 	node_c *p_client = NULL;
+	char str[2];
 	node_c *clientToSub = (node_c *) malloc(sizeof(node_c));
 	
 	clientToSub->client = client;
 	clientToSub->f = methodToCall;
-	
+	printf("\ncliente %p\n", clientToSub->client);
 	
 	// SI EL EVENTO NO EXISTE, LO AGREGAMOS A LA LISTA DE EVENTOS EN EL CENTRO
 	if (!eventToSub){
@@ -267,44 +269,59 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 	// SI HAY UN SENDER VINCULADO AL EVENTO, AGREGAMOS EL SENDER EN EL EVENTO. EN CASO DE QUE
 	// EL SENDER SEA (NULL) AGREGAMOS EL CLIENTE A LA LISTA DE CLIENTES   
 	if(sender){
-			// YA QUE AGREGAMOS EL EVENTO AL CENTRO, CREAMOS LA LISTA DE ESTE SENDER
-			senderToSub = locateSender(eventToSub, sender);
-			// SI EL SENDER NO EXISTE DENTRO DEL EVENTO, LO AGREGAMOS A LA LISTA DE SENDERS DEL EVENTO
-			if(!senderToSub) {
-					senderToSub = (node_s *)malloc(sizeof(node_s));
-					senderToSub->sender = sender;
+		// YA QUE AGREGAMOS EL EVENTO AL CENTRO, CREAMOS LA LISTA DE ESTE SENDER
+		senderToSub = locateSender(eventToSub, sender);
+		// SI EL SENDER NO EXISTE DENTRO DEL EVENTO, LO AGREGAMOS A LA LISTA DE SENDERS DEL EVENTO
+		if(!senderToSub) {
+				senderToSub = (node_s *)malloc(sizeof(node_s));
+				senderToSub->sender = sender;
 
-					p_sender = eventToSub->senders;
-					if(!p_sender) eventToSub->senders = senderToSub;
-					else {
-							while(p_sender->next) p_sender = p_sender->next;
-							p_sender->next = senderToSub;
-					}
-			}
-			//AGREGAMOS EL CLIENTE A LA LISTA DEl SENDER
-			p_client = senderToSub->clients;
-			if(!p_client){
-						senderToSub->clients = clientToSub;
-						return;
-			}
-	} else{ 
-			p_client = eventToSub->clients; //AGREGAMOS EL CLIENTE A LA LISTA DEL EVENTO
-			if(!p_client) {
-					eventToSub->clients = clientToSub;
+				p_sender = eventToSub->senders;
+				if(!p_sender) eventToSub->senders = senderToSub;
+				else {
+						while(p_sender->next) p_sender = p_sender->next;
+						p_sender->next = senderToSub;
+				}
+		}
+		//AGREGAMOS EL CLIENTE A LA LISTA DEl SENDER
+		p_client = senderToSub->clients;
+		if(!p_client){
+					senderToSub->clients = clientToSub;
+					clientToSub->next = NULL;
 					return;
-			}
+		}
+		// printf("\nevento %s\nsender %p\n centro %s\n", eventToSub->name, senderToSub->sender, c->name);
+	} else{ 
+		p_client = eventToSub->clients; //AGREGAMOS EL CLIENTE A LA LISTA DEL EVENTO
+		if(!p_client) {
+				eventToSub->clients = clientToSub;
+				clientToSub->next = NULL;
+				return;
+		}
 	}
 	// CHEQUEAMOS QUE EL PRIMER ELEMENTO DE LA LISTA NO SEA IGUAL AL CLIENTE
 	if(p_client->client == client) return;
+	sleep(2);
+	node_c *auxi = p_client;
 	
+	if(p_client == p_client->next){
+		p_client->next= NULL;
+	}
 	// AHORA AGREGAMOS EL CLIENTE QUE ESCUCHA AL SENDER EN LA LISTA CORRESPONDIENTE
-	while(p_client->next){
-			if(p_client->client == client) return; // CHEQUEAMOS QUE EL CLIENTE NO ESTE EN LA LISTA
-			p_client = p_client->next;
+	while(p_client && p_client != p_client->next && p_client->next){
+		scanf("%s", str);
+		printf("\n%p\n", p_client->client);
+		printf("\n%p\n", p_client->next->client);
+		printf("\n%p\n", p_client->next->next->client);
+		printf("\n%p\n", client);
+		if(p_client->client && p_client->client == client) return; // CHEQUEAMOS QUE EL CLIENTE NO ESTE EN LA LISTA
+		p_client = p_client->next;
 	} 
-	p_client->next = clientToSub;
-	clientToSub->next = NULL;
-	
+	if(p_client){
+		p_client->next = clientToSub;
+		clientToSub->next = NULL;
+	}
+	printf("\n ended \n");
 }
 
 void removeObserver(char *center, void *client, char *event){
@@ -490,13 +507,13 @@ void post(char *center, char *event, void *sender, void *params){
 
 	node_c *client = e->clients;
 	while(client){
-		client->f(client->client);
+		client->f(params);
 		client = client->next;
 	}
 
 	client = s->clients;
 	while(client){
-		client->f(client->client);
+		client->f(params);
 		client = client->next;
 	}
 
@@ -526,13 +543,13 @@ void *executioner(void *a){
 	tim.tv_nsec = 0;
 	struct postParams *args = (struct postParams *)a;
 	int remaining = args->miliseconds;
-	printf("\nPOSTDELAYED EXECUTING\n");
+
 	if((remaining / 1000) > 0){
 		tim.tv_sec = (remaining / 1000);
 		remaining = (tim.tv_sec*1000) - remaining; 
 	}
 	tim.tv_nsec = (remaining) * 1000000L;
-	printf("\nel threaad dormira por %ld %ld\n", tim.tv_nsec, tim.tv_nsec);
+
 	nanosleep(&tim, &tim2);
 
 	pthread_mutex_lock(&lock);
