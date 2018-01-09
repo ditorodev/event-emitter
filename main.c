@@ -4,6 +4,9 @@
 #include "event-emitter.h"
 
 
+void deleteIt(void *a){
+	removeCenter((char *)a);
+}
 
 void eventToFire(void *a){
 	printf("\n\n\n\n\n\nEl evento ha sido lanzado con %p\n\n\n\n\n\n\n", a);
@@ -43,7 +46,7 @@ int main (void) {
 	observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
 	observeCenterFromClient(NULL, &i, NULL, "hola", eventToFire);
 	observeCenterFromClient("A", &i, NULL, "hola", eventToFire);
-	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
+	observeCenterFromClient("A", &a, &c, "borralo", deleteIt);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
 	observeCenterFromClient("A", &b, &c, "hola", eventToFire);
@@ -54,14 +57,15 @@ int main (void) {
 	observeCenterFromClient("C", &a, NULL, "hola", eventToFire);
 	observeCenterFromClient("C", &a, &c, "hola", eventToFire);
 	observeCenterFromCenter("C", "A", "hola");
-	post("C", "hola", &c, (void *)"C es el sender para el centro C");
-	postDelayed("C", "hola", &c, (void *)"C es el sender para el centro C", 60000);
+	post("C", "hola", &c, &c);
+	postDelayed("A", "borralo", &c, (void *)"C", 6000);
 	imprimirCentros();
 	printf("\n\n\n\n\n\n");
 	removeAllObservers(&e);
 	removeObservers("A", &b);
 	removeObserver("A", &i, "hola");
 	removeObserver("A", &a, "hola");
+	imprimirCentros();
 	removeObservers("A", &a);
 	removeObservers("A", &c);
 	imprimirCentros();
@@ -80,12 +84,14 @@ int main (void) {
 	imprimirCentros();
 	removeObserverFromCenter("A", "B", "hola");
 	removeObserverFromCenter("A", "C", "hola");
-	removeCenter("A");
+	// removeCenter("A");
 	removeObserversFromCenter("A", "B");
 	printf("\n remove all observers de b %p \n\n", &b);
 	removeAllObservers(&b);
 	imprimirCentros();
 	scanf("%s", nombre);
+	removeCenter("A");
+	imprimirCentros();
 	
 	return 0;
 }

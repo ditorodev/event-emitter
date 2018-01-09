@@ -160,6 +160,8 @@ void newCenter(char *name) {
 	aux = CENTROS;
 	while(aux->next) aux = aux->next;
 	aux->next = new;
+	new->events = NULL;
+	new->next = NULL;
 }
 
 Centro * locateCenter(char *center){
@@ -208,6 +210,10 @@ void observeCenterFromCenter (char *centerA, char *centerB, char *event){
 					while(aux->next) aux = aux->next;
 					aux->next = eventToSub;
 			}
+			eventToSub->senders = NULL;
+			eventToSub->centers = NULL;
+			eventToSub->clients = NULL;
+			eventToSub->next = NULL;
 	}
 			
 	// ASOCIAMOS EL CENTRO B AL EVENTO
@@ -251,6 +257,7 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 	
 	clientToSub->client = client;
 	clientToSub->f = methodToCall;
+	clientToSub->next = NULL;
 	
 	
 	// SI EL EVENTO NO EXISTE, LO AGREGAMOS A LA LISTA DE EVENTOS EN EL CENTRO
@@ -263,14 +270,20 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 					while(aux->next) aux = aux->next;
 					aux->next = eventToSub;
 			}
+			eventToSub->senders = NULL;
+			eventToSub->centers = NULL;
+			eventToSub->clients = NULL;
+			eventToSub->next = NULL;
 	}
 	// SI HAY UN SENDER VINCULADO AL EVENTO, AGREGAMOS EL SENDER EN EL EVENTO. EN CASO DE QUE
 	// EL SENDER SEA (NULL) AGREGAMOS EL CLIENTE A LA LISTA DE CLIENTES   
 	if(sender){
 			// YA QUE AGREGAMOS EL EVENTO AL CENTRO, CREAMOS LA LISTA DE ESTE SENDER
 			senderToSub = locateSender(eventToSub, sender);
+			
 			// SI EL SENDER NO EXISTE DENTRO DEL EVENTO, LO AGREGAMOS A LA LISTA DE SENDERS DEL EVENTO
 			if(!senderToSub) {
+				printf("\nlo busque y no lo encontre\n");
 					senderToSub = (node_s *)malloc(sizeof(node_s));
 					senderToSub->sender = sender;
 
@@ -280,9 +293,12 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 							while(p_sender->next) p_sender = p_sender->next;
 							p_sender->next = senderToSub;
 					}
+					senderToSub->clients = NULL;
 			}
+			printf("\n senderToSub %p sender %p \n", senderToSub->sender, sender);
 			//AGREGAMOS EL CLIENTE A LA LISTA DEl SENDER
 			p_client = senderToSub->clients;
+			printf("\n senderToSub clients %p \n", p_client);
 			if(!p_client){
 						senderToSub->clients = clientToSub;
 						return;
@@ -303,7 +319,6 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 			p_client = p_client->next;
 	} 
 	p_client->next = clientToSub;
-	clientToSub->next = NULL;
 	
 }
 
@@ -490,13 +505,13 @@ void post(char *center, char *event, void *sender, void *params){
 
 	node_c *client = e->clients;
 	while(client){
-		client->f(client->client);
+		client->f(params);
 		client = client->next;
 	}
 
 	client = s->clients;
 	while(client){
-		client->f(client->client);
+		client->f(params);
 		client = client->next;
 	}
 
@@ -526,13 +541,11 @@ void *executioner(void *a){
 	tim.tv_nsec = 0;
 	struct postParams *args = (struct postParams *)a;
 	int remaining = args->miliseconds;
-	printf("\nPOSTDELAYED EXECUTING\n");
 	if((remaining / 1000) > 0){
 		tim.tv_sec = (remaining / 1000);
 		remaining = (tim.tv_sec*1000) - remaining; 
 	}
 	tim.tv_nsec = (remaining) * 1000000L;
-	printf("\nel threaad dormira por %ld %ld\n", tim.tv_nsec, tim.tv_nsec);
 	nanosleep(&tim, &tim2);
 
 	pthread_mutex_lock(&lock);
