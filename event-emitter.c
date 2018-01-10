@@ -23,8 +23,7 @@ void error(int n){
 			break;
 		case 4:
 			printf("El sender no tiene suscriptores ");
-			break;
-		
+			break;	
 	}
 	printf("\n");
 }
@@ -142,28 +141,6 @@ void imprimirCentros(void) {
 
 }
 
-
-void newCenter(char *name) {
-	if(!name) {
-		error(0);
-		return;
-	}
-	Centro *new = (Centro *) malloc(sizeof(Centro));
-	if(!CENTROS){ // NOS ASEGURAMOS QUE EXISTA ALGUIEN EN LA LISTA DE CENTROS
-			CENTROS = new;
-			strcpy(new->name, name);
-			return;
-	}
-
-	Centro *aux = CENTROS;
-	strcpy(new->name, name);
-	aux = CENTROS;
-	while(aux->next) aux = aux->next;
-	aux->next = new;
-	new->events = NULL;
-	new->next = NULL;
-}
-
 Centro * locateCenter(char *center){
 	Centro *aux = CENTROS;
 	
@@ -183,6 +160,31 @@ node_s * locateSender(node_e *event, void *sender){
 	while(aux && aux->sender != sender) aux = aux->next;
 	return aux;
 }
+
+void newCenter(char *name) {
+	if(!name) {
+		error(0);
+		return;
+	}
+
+	if(locateCenter(name)) return; // SI EL CENTRO YA EXISTE NO LO AGREGAMOS 
+	
+	Centro *new = (Centro *) malloc(sizeof(Centro));
+	if(!CENTROS){ // NOS ASEGURAMOS QUE EXISTA ALGUIEN EN LA LISTA DE CENTROS
+			CENTROS = new;
+			strcpy(new->name, name);
+			return;
+	}
+
+	Centro *aux = CENTROS;
+	strcpy(new->name, name);
+	aux = CENTROS;
+	while(aux->next) aux = aux->next;
+	aux->next = new;
+	new->events = NULL;
+	new->next = NULL;
+}
+
 // Centro B observa al centro A
 void observeCenterFromCenter (char *centerA, char *centerB, char *event){
 	if(!centerA || !centerB || !event) return;
@@ -225,7 +227,6 @@ void observeCenterFromCenter (char *centerA, char *centerB, char *event){
 	}else{
 			if(aux1->center == cB) return; //CHEQUEAMOS QUE EL PRIMER CENTRO DE LA LISTA NO SEA EL MISMO QUE VAMOS A AGREGAR
 			while(aux1->next){ 
-					//printf("\n  %s  \n", aux1->center->name);
 					if(aux1->center == cB) return; // CHEQUEAMOS QUE EL CENTRO QUE QUEREMOS AGREGR NO SE ENCUENTRE EN LA LISTA
 					aux1 = aux1->next;
 			} 
@@ -283,7 +284,6 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 			
 			// SI EL SENDER NO EXISTE DENTRO DEL EVENTO, LO AGREGAMOS A LA LISTA DE SENDERS DEL EVENTO
 			if(!senderToSub) {
-				printf("\nlo busque y no lo encontre\n");
 					senderToSub = (node_s *)malloc(sizeof(node_s));
 					senderToSub->sender = sender;
 
@@ -295,27 +295,31 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 					}
 					senderToSub->clients = NULL;
 			}
-			printf("\n senderToSub %p sender %p \n", senderToSub->sender, sender);
 			//AGREGAMOS EL CLIENTE A LA LISTA DEl SENDER
 			p_client = senderToSub->clients;
-			printf("\n senderToSub clients %p \n", p_client);
 			if(!p_client){
-						senderToSub->clients = clientToSub;
-						return;
+				senderToSub->clients = clientToSub;
+				return;
 			}
 	} else{ 
 			p_client = eventToSub->clients; //AGREGAMOS EL CLIENTE A LA LISTA DEL EVENTO
 			if(!p_client) {
-					eventToSub->clients = clientToSub;
-					return;
+				eventToSub->clients = clientToSub;
+				return;
 			}
 	}
 	// CHEQUEAMOS QUE EL PRIMER ELEMENTO DE LA LISTA NO SEA IGUAL AL CLIENTE
-	if(p_client->client == client) return;
+	if(p_client->client == client){ 
+		free(clientToSub);
+		return;
+	}
 	
 	// AHORA AGREGAMOS EL CLIENTE QUE ESCUCHA AL SENDER EN LA LISTA CORRESPONDIENTE
 	while(p_client->next){
-			if(p_client->client == client) return; // CHEQUEAMOS QUE EL CLIENTE NO ESTE EN LA LISTA
+			if(p_client->client == client){
+				free(clientToSub);
+				return; // CHEQUEAMOS QUE EL CLIENTE NO ESTE EN LA LISTA
+			}
 			p_client = p_client->next;
 	} 
 	p_client->next = clientToSub;
