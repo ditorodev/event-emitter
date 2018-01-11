@@ -334,7 +334,7 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 		free(clientToSub);
 		return; // CHEQUEAMOS QUE EL CLIENTE NO ESTE EN LA LISTA
 	}
-	
+
 	p_client->next = clientToSub;
 	
 }
@@ -522,7 +522,6 @@ void post(char *center, char *event, void *sender, void *params){
 		client->f(params);
 		client = client->next;
 	}
-	//printf("\n PASO LOS CLIENTES EN EVENTO \n");
 	if(s){
 		client = s->clients;
 		while(client){
