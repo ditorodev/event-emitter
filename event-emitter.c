@@ -195,6 +195,10 @@ void observeCenterFromCenter (char *centerA, char *centerB, char *event){
 		error(1);
 		return;
 	}
+	if(cA == cB){
+		printf("\n los centros no pueden ser iguales \n");
+		return;
+	}
 
 	node_e *aux = NULL;
 	node_e *eventToSub = locateEvent(cA, event);
@@ -213,6 +217,7 @@ void observeCenterFromCenter (char *centerA, char *centerB, char *event){
 					aux->next = eventToSub;
 			}
 			eventToSub->senders = NULL;
+			eventToSub->emitToClients = 0;
 			eventToSub->centers = NULL;
 			eventToSub->clients = NULL;
 			eventToSub->next = NULL;
@@ -230,6 +235,7 @@ void observeCenterFromCenter (char *centerA, char *centerB, char *event){
 					if(aux1->center == cB) return; // CHEQUEAMOS QUE EL CENTRO QUE QUEREMOS AGREGR NO SE ENCUENTRE EN LA LISTA
 					aux1 = aux1->next;
 			} 
+			if(aux1->center == cB) return;
 			aux1->next = (node_center *) malloc(sizeof(node_center));
 			aux1->next->center = cB;
 			aux1->next->next = NULL;
@@ -272,6 +278,7 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 					aux->next = eventToSub;
 			}
 			eventToSub->senders = NULL;
+			eventToSub->emitToClients = 0;
 			eventToSub->centers = NULL;
 			eventToSub->clients = NULL;
 			eventToSub->next = NULL;
@@ -322,6 +329,12 @@ void observeCenterFromClient(char *centerA, void *client, void *sender, char *ev
 			}
 			p_client = p_client->next;
 	} 
+
+	if(p_client->client == client){
+		free(clientToSub);
+		return; // CHEQUEAMOS QUE EL CLIENTE NO ESTE EN LA LISTA
+	}
+	
 	p_client->next = clientToSub;
 	
 }
@@ -490,10 +503,11 @@ void post(char *center, char *event, void *sender, void *params){
 	if(!center || !event || !sender) return;
 
 	Centro *c = locateCenter(center);
-	if(!c) {
+	if(!c) {  
 		error(1);
 		return;
 	}
+	c->events->emitToClients = 1;
 
 	node_e *e = locateEvent(c, event);
 	if(!e) {
@@ -502,28 +516,26 @@ void post(char *center, char *event, void *sender, void *params){
 	}
 
 	node_s *s = locateSender(e, sender);
-	if(!s) {
-		error(4);
-		return;
-	}
 
 	node_c *client = e->clients;
 	while(client){
 		client->f(params);
 		client = client->next;
 	}
-
-	client = s->clients;
-	while(client){
-		client->f(params);
-		client = client->next;
+	//printf("\n PASO LOS CLIENTES EN EVENTO \n");
+	if(s){
+		client = s->clients;
+		while(client){
+			client->f(params);
+			client = client->next;
+		}
 	}
-
 	node_center *centers = e->centers;
 	while(centers){
-		post(centers->center->name, event, sender, params);
+		if(!centers->center->events->emitToClients) post(centers->center->name, event, sender, params);
 		centers = centers->next;
 	}
+	c->events->emitToClients = 0;
 	
 	
 }
